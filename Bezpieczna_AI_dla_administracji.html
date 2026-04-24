@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Quantica Lab — RAG dla administracji publicznej</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{overflow:hidden;width:100vw;height:100vh;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;}
+::selection{background:#BB2649;color:#fff;}
+:root{--accent:#BB2649;--dark:#050505;--light:#f5f5f0;--mid:#e8e5df;--text-dark:#111;--text-light:#f0ece6;--text-muted-dark:rgba(240,236,230,0.7);--text-muted-light:rgba(17,17,17,0.6);--page-scale:1;}
+h1,h2,h3,h4,h5,h6,.font-display{font-family:'Archivo Black',sans-serif;font-weight:400;letter-spacing:-0.02em;line-height:1.05;}
+#magazine{display:flex;height:100vh;width:max-content;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1);}
+.page{width:100vw;height:100vh;position:relative;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch;}
+.page-inner{width:1440px;height:900px;transform-origin:top left;transform:scale(var(--page-scale));display:flex;flex-direction:column;justify-content:flex-end;padding:54px 100px 90px 100px;position:relative;}
+.page.dark{background:var(--dark);color:var(--text-light);}
+.page.dark p,.page.dark li{color:var(--text-muted-dark);opacity:0.88;}
+.page.dark .callout{opacity:0.8;}
+.page.light{background:var(--light);color:var(--text-dark);}
+.page.light p,.page.light li{color:var(--text-muted-light);opacity:0.88;}
+.page.light .callout{opacity:0.8;}
+.page.alt{background:#fff;color:var(--text-dark);}
+.page.alt p,.page.alt li{color:var(--text-muted-light);opacity:0.88;}
+.section-label{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;margin-bottom:24px;color:var(--accent);}
+.page h2{font-size:70px;margin-bottom:28px;line-height:1.1;}
+.page h3{font-size:27px;margin-bottom:14px;line-height:1.15;font-family:'Archivo Black',sans-serif;}
+.page p{font-size:18px;line-height:1.7;margin-bottom:14px;max-width:620px;}
+.page .lead{font-size:21px;line-height:1.6;font-weight:300;}
+.page .small{font-size:15px;line-height:1.65;}
+.callout{font-size:24px;line-height:1.5;font-weight:300;font-style:italic;border-left:3px solid var(--accent);padding-left:28px;margin:20px 0;max-width:520px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;align-items:start;}
+.four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:32px;align-items:start;}
+.step-num{font-family:'Archivo Black',sans-serif;font-size:72px;color:var(--accent);opacity:0.25;line-height:1;margin-bottom:6px;}
+.step-num-small{font-family:'Archivo Black',sans-serif;font-size:48px;color:var(--accent);opacity:0.3;line-height:1;margin-bottom:8px;}
+.page ul{list-style:none;padding:0;}
+.page ul li{padding:5px 0;padding-left:1.4em;position:relative;font-size:16px;line-height:1.55;}
+.page ul li::before{content:'';position:absolute;left:0;top:1.05em;width:6px;height:6px;background:var(--accent);border-radius:50%;}
+#dot-nav{position:fixed;right:2vw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:100;}
+#dot-nav .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);background:transparent;cursor:pointer;transition:all 0.3s;}
+#dot-nav .dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.3);}
+#dot-nav .dot.on-light{border-color:rgba(0,0,0,0.3);}
+#dot-nav .dot.on-light.active{border-color:var(--accent);}
+.arrow-hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.3;z-index:100;color:#fff;font-family:'Space Grotesk',sans-serif;transition:opacity 0.3s;}
+.arrow-hint.on-light{color:#111;}
+.page-logo{position:absolute;top:45px;left:100px;}
+.page-logo img{height:36px;display:block;}
+.page-logo-right{position:absolute;top:45px;right:100px;}
+.page-logo-right img{height:36px;display:block;}
+.cover-issue{position:absolute;top:45px;right:100px;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.4;}
+.cover h1{font-size:120px;line-height:0.95;margin-bottom:28px;}
+.cover .tagline{font-size:24px;font-weight:300;opacity:0.6;margin-bottom:8px;}
+.cover .sub{font-size:18px;opacity:0.4;max-width:520px;}
+.back-cover .page-inner{justify-content:center;align-items:center;text-align:center;}
+.back-cover h2{font-size:77px;margin-bottom:18px;}
+.back-cover .contact-line{font-size:20px;opacity:0.5;margin-bottom:8px;}
+.back-cover .cta-btn{display:inline-block;margin-top:36px;padding:16px 48px;border:2px solid var(--accent);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:all 0.3s;}
+.back-cover .cta-btn:hover{background:var(--accent);color:#fff;}
+.accent-line{width:60px;height:3px;background:var(--accent);margin-bottom:28px;}
+.big-stat{font-family:'Archivo Black',sans-serif;font-size:120px;line-height:0.95;color:var(--accent);letter-spacing:-0.04em;}
+.big-stat-label{font-size:15px;letter-spacing:0.15em;text-transform:uppercase;opacity:0.5;margin-top:8px;}
+.feature-block{margin-bottom:18px;}
+.feature-block h3{font-size:22px;margin-bottom:8px;}
+.feature-block p{font-size:15.5px;line-height:1.55;margin-bottom:0;}
+</style>
+</head>
+<body>
+
+<div id="magazine">
+
+<!-- PAGE 1: COVER -->
+<div class="page dark cover" data-theme="dark">
+  <div class="page-logo"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="cover-issue">Administracja publiczna / 2026</div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 80%, rgba(187,38,73,0.08) 0%, transparent 60%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;">
+    <p class="tagline">Quantica Lab</p>
+    <h1>Bezpieczna AI<br>dla administracji</h1>
+    <div class="accent-line"></div>
+    <p class="sub">System RAG dla urzędów. Odpowiedzi na bazie wiedzy urzędu, pod pełną kontrolą instytucji, zgodne z wymogami AI Act i RODO.</p>
+  </div>
+</div>
+
+<!-- PAGE 2: WYZWANIA -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Kontekst</div>
+  <h2>Spraw przybywa<br>szybciej niż rąk</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Liczba spraw wpływających do urzędów rośnie szybciej niż liczba pracowników. Jednocześnie mieszkańcy oczekują sprawnej obsługi, precyzyjnych informacji i krótszego czasu realizacji.</p>
+      <p>Jednostki samorządu terytorialnego mierzą się z kilkoma równoległymi wyzwaniami, a żadnego z nich nie da się rozwiązać wyłącznie przez zwiększanie etatów.</p>
+    </div>
+    <div>
+      <h3>Cztery wyzwania urzędów</h3>
+      <ul>
+        <li>Rosnąca liczba zapytań i wniosków</li>
+        <li>Presja skracania czasu obsługi</li>
+        <li>Potrzeba prostszego i bardziej zrozumiałego języka komunikacji</li>
+        <li>Konieczność zapewnienia równego dostępu do informacji</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: ZMIANA OCZEKIWAŃ -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Zmiana oczekiwań mieszkańców</div>
+  <h2>Mieszkaniec oczekuje<br>natychmiastowej odpowiedzi</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Sztuczna inteligencja stała się częścią codzienności. Mieszkańcy przyzwyczajają się do natychmiastowych odpowiedzi, dostępu do informacji 24/7 oraz prostych form kontaktu — takich jak czat.</p>
+      <p>Potwierdzeniem tej zmiany jest rosnąca popularność Wirtualnego Asystenta w aplikacji mObywatel. Podobnych standardów dostępności obywatele oczekują również w kontaktach z administracją publiczną.</p>
+      <div class="callout">Administracja potrzebuje rozwiązań, które pozwolą pogodzić rosnące obciążenie z wysoką jakością i dostępnością usług.</div>
+    </div>
+    <div style="text-align:left;">
+      <div class="big-stat">11M+</div>
+      <div class="big-stat-label">użytkowników mObywatel</div>
+      <p style="margin-top:40px;">Skala, która nie zostawia wątpliwości: AI w obsłudze spraw urzędowych nie jest już eksperymentem, tylko standardem, do którego obywatele już się przyzwyczaili.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: CO DAJE AI -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Efekty wdrożenia AI</div>
+  <h2>Cztery efekty<br>dobrze wdrożonej AI</h2>
+  <p class="lead" style="max-width:820px;margin-bottom:36px;">Dobrze zaprojektowana i właściwie wdrożona AI wspiera budowę administracji bliższej mieszkańcom — bardziej efektywnej, dostępnej i godnej zaufania.</p>
+  <div class="four-col" style="margin-top:1vh;">
+    <div>
+      <div class="step-num">01</div>
+      <h3 style="font-size:22px;">Większa przepustowość</h3>
+      <p class="small">Zwiększenie możliwości obsługi spraw bez zwiększania obciążenia pracowników.</p>
+    </div>
+    <div>
+      <div class="step-num">02</div>
+      <h3 style="font-size:22px;">Obowiązki z KPA</h3>
+      <p class="small">Usprawnienie realizacji obowiązków informacyjnych urzędu wynikających z KPA.</p>
+    </div>
+    <div>
+      <div class="step-num">03</div>
+      <h3 style="font-size:22px;">Przejrzystość</h3>
+      <p class="small">Przejrzystość informacji publicznych oraz jednolite i zrozumiałe komunikaty dla mieszkańców.</p>
+    </div>
+    <div>
+      <div class="step-num">04</div>
+      <h3 style="font-size:22px;">Wizerunek urzędu</h3>
+      <p class="small">Wzmocnienie wizerunku urzędu jako nowoczesnej i odpowiedzialnie zarządzanej instytucji.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: WARUNKI - DANE -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Warunki skutecznego wdrożenia · 01</div>
+  <h2>Dostęp do<br>uporządkowanych danych</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Dane stanowią jeden z kluczowych zasobów administracji publicznej, ale ich wykorzystanie w projektach AI wymaga odpowiedniego przygotowania.</p>
+      <p>Informacje są często rozproszone między systemami, zapisane w formie nieustrukturyzowanych dokumentów i w różnym stopniu uporządkowane.</p>
+    </div>
+    <div>
+      <div class="callout">Skuteczne wdrożenie AI nie polega wyłącznie na uruchomieniu modelu — wymaga przemyślanego podejścia do jakości, aktualności i struktury danych.</div>
+      <p>Dopiero po uporządkowaniu warstwy danych ma sens uruchamianie warstwy AI. W praktyce to właśnie ten etap decyduje o sukcesie wdrożenia.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: WARUNKI - DOPASOWANIE -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Warunki skutecznego wdrożenia · 02</div>
+  <h2>Dostęp do odpowiednio<br>przygotowanych danych</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Ogólne rozwiązania oparte na LLM są łatwo dostępne i wykorzystywane do wyszukiwania informacji — także o sprawach urzędowych.</p>
+      <p>Nie są jednak projektowane z myślą o konkretnej jednostce ani jej procedurach. Bez dostępu do aktualnych dokumentów i lokalnych regulacji mogą udzielać odpowiedzi błędnych, niepełnych — a w skrajnych przypadkach całkiem zmyślonych.</p>
+    </div>
+    <div>
+      <div class="callout">Większość ogólnodostępnych modeli w ograniczonym stopniu uwzględnia język oraz kontekst prawny polskiej administracji, co negatywnie wpływa na precyzję komunikacji.</div>
+      <p>Rozwiązania „z półki" nie odpowiadają specyfice danego urzędu i wymagają dostosowania do lokalnych procedur, dokumentów oraz sposobu komunikacji z mieszkańcami.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 7: WARUNKI - BEZPIECZEŃSTWO -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Warunki skutecznego wdrożenia · 03</div>
+  <h2>Bezpieczeństwo, kontrola<br>i zgodność z regulacjami</h2>
+  <div class="two-col">
+    <div>
+      <p>Administracje publiczne ponoszą odpowiedzialność za bezpieczeństwo informacji urzędowych. Korzystanie z ogólnodostępnych, zwłaszcza bezpłatnych narzędzi AI może ograniczać wpływ na sposób przetwarzania danych.</p>
+      <p>Treści wprowadzane do takich systemów — w tym informacje objęte tajemnicą służbową, dane osobowe czy dokumenty wewnętrzne — mogą być przetwarzane na zewnętrznych serwerach, również poza UE, oraz wykorzystywane przez dostawcę usługi.</p>
+      <div class="callout">Wdrażanie AI w administracji publicznej powinno bazować na rozwiązaniach zapewniających realną kontrolę nad danymi oraz ich bezpieczne przetwarzanie.</div>
+    </div>
+    <div>
+      <h3>Suwerenność technologiczna</h3>
+      <p>Zależność od zewnętrznych dostawców oznacza mniejszy wpływ na ciągłość działania systemu, warunki świadczenia usług oraz jego rozwój. Zmiany polityki dostawcy, modelu rozliczeń czy dostępności rozwiązania pozostają poza kontrolą administracji.</p>
+      <h3 style="margin-top:24px;">AI Act i sektor publiczny</h3>
+      <p>Nowe regulacje europejskie, w tym AI Act, nakładają szczególne wymagania na systemy wykorzystywane w sektorze publicznym. Wymusza to wybór rozwiązań transparentnych, odpowiednio udokumentowanych i bezpiecznych.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 8: CZYM JEST RAG -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">RAG — Retrieval-Augmented Generation</div>
+  <h2>AI oparta<br>na wiedzy urzędu</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Wdrażanie AI w administracji publicznej powinno opierać się na podejściu, które łączy możliwości modeli językowych z aktualną wiedzą urzędu, uwzględnia specyfikę lokalnych procedur oraz zapewnia realną kontrolę nad danymi. Takim podejściem jest RAG.</p>
+      <p>System odpowiada na bazie informacji wyszukanych w wcześniej zdefiniowanym zbiorze zweryfikowanych dokumentów — uchwał, rozporządzeń, regulaminów, procedur czy komunikatów.</p>
+    </div>
+    <div>
+      <h3>Dwuetapowe działanie</h3>
+      <ul>
+        <li><strong>Etap 1 — wyszukiwanie.</strong> System identyfikuje najbardziej trafne dokumenty lub ich fragmenty.</li>
+        <li><strong>Etap 2 — generowanie.</strong> Na ich podstawie przygotowuje jasną i zrozumiałą odpowiedź na pytanie użytkownika.</li>
+      </ul>
+      <div class="callout">Odpowiedzi powstają wyłącznie z udokumentowanych źródeł — nie z „pamięci" modelu.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 9: KORZYŚCI -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Korzyści dla administracji publicznej</div>
+  <h2>Wiarygodność,<br>dopasowanie, kontrola</h2>
+  <div class="four-col" style="margin-top:2vh;">
+    <div>
+      <div class="step-num">01</div>
+      <h3 style="font-size:22px;">Wiarygodność odpowiedzi</h3>
+      <p class="small">Odpowiedzi powstają na podstawie zweryfikowanych dokumentów, co istotnie ogranicza ryzyko błędów i wzmacnia zaufanie do udzielanych informacji.</p>
+    </div>
+    <div>
+      <div class="step-num">02</div>
+      <h3 style="font-size:22px;">Dopasowanie do realiów</h3>
+      <p class="small">System korzysta z dokumentów konkretnej jednostki i uwzględnia polski kontekst administracyjny oraz obowiązujące procedury.</p>
+    </div>
+    <div>
+      <div class="step-num">03</div>
+      <h3 style="font-size:22px;">Bezpieczeństwo i kontrola</h3>
+      <p class="small">Baza dokumentów pozostaje pod kontrolą urzędu, a rozwiązanie może działać w bezpiecznym środowisku zgodnym z wymogami ochrony danych.</p>
+    </div>
+    <div>
+      <div class="step-num">04</div>
+      <h3 style="font-size:22px;">Efektywność operacyjna</h3>
+      <p class="small">RAG porządkuje wiedzę instytucji — może być wdrażany jako czatbot dla mieszkańców lub narzędzie wewnętrzne wspierające biura obsługi.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 10: CO NAS WYRÓŻNIA - ZAPLECZE + PRECYZJA -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Co wyróżnia nasz system RAG · 01/05 · 02/05</div>
+  <h2>Zaplecze PLLuM<br>i architektura Enterprise</h2>
+  <div class="two-col">
+    <div>
+      <div class="feature-block">
+        <h3>Zaplecze eksperckie i technologiczne</h3>
+        <p>System rozwijany jest przez zespół współtworzący polskie duże modele językowe <strong>PLLuM</strong>, posiadający doświadczenie we wdrożeniach w administracji publicznej — m.in. przy budowie Wirtualnego Asystenta w aplikacji mObywatel oraz czatbotów w urzędach miast.</p>
+      </div>
+      <div class="callout">Rozwiązanie bazuje na architekturze <strong>Enterprise RAG</strong> opracowanej przez Intel, dostosowanej przez nas do języka polskiego i zastosowań w administracji publicznej.</div>
+      <p>Komponenty systemu dobieramy nie tylko na podstawie analizy benchmarków, ale także własnych testów na danych urzędowych.</p>
+    </div>
+    <div>
+      <div class="feature-block">
+        <h3>Precyzja wyszukiwania i dopasowanie językowe</h3>
+        <p>System wykorzystuje <strong>hybrydowe mechanizmy wyszukiwania</strong> oraz ocenę trafności wyników, co zwiększa precyzję odpowiedzi.</p>
+        <p>Umożliwia filtrowanie dokumentów według metadanych — np. roku publikacji. Odpowiedzi tworzone są przez model zoptymalizowany pod kątem języka polskiego i realiów administracji, z możliwością dalszego dostrojenia do specyfiki danej jednostki.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 11: CO NAS WYRÓŻNIA - BEZPIECZEŃSTWO + TRANSPARENTNOŚĆ -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Co wyróżnia nasz system RAG · 03/05 · 04/05</div>
+  <h2>Kontrola zakresu<br>i transparentność</h2>
+  <div class="two-col">
+    <div>
+      <div class="feature-block">
+        <h3>Bezpieczeństwo odpowiedzi i kontrola zakresu działania</h3>
+        <p>System funkcjonuje w ramach uzgodnionego zakresu tematycznego i korzysta z bazy dokumentów urzędu. Mechanizmy zabezpieczające ograniczają możliwość generowania treści obraźliwych, niezgodnych z prawem lub wykraczających poza kompetencje administracji publicznej.</p>
+        <div class="callout">W przypadku braku informacji w bazie system nie tworzy odpowiedzi spekulatywnych — informuje o braku danych i wskazuje możliwość bezpośredniego kontaktu z urzędem.</div>
+      </div>
+    </div>
+    <div>
+      <div class="feature-block">
+        <h3>Transparentność i weryfikacja jakości działania</h3>
+        <p>Odpowiedzi zawierają <strong>odwołania do dokumentów źródłowych w formie cytowań</strong>, co zwiększa przejrzystość i wiarygodność systemu. Użytkownik może doprecyzować pytanie i prowadzić rozmowę z zachowaniem kontekstu.</p>
+        <p>Działanie systemu oceniamy w scenariuszach urzędowych i na zbiorach zadań tworzonych indywidualnie dla danej instytucji. Każde wdrożenie poprzedza analiza jakości odpowiedzi na rzeczywistych danych.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 12: MODEL WDROŻENIA + PODSUMOWANIE -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Co wyróżnia nasz system RAG · 05/05 · Podsumowanie</div>
+  <h2>Model wdrożenia<br>dopasowany do urzędu</h2>
+  <div class="two-col">
+    <div>
+      <div class="feature-block">
+        <h3>Model wdrożenia dostosowany do potrzeb administracji</h3>
+        <p>Rozwiązanie może być integrowane z istniejącymi systemami i wdrażane w bezpiecznym środowisku. Oferujemy różne scenariusze wdrożenia — <strong>chmurowe oraz on-premise</strong>, na infrastrukturze własnej lub urzędu — zgodnie z wymaganiami bezpieczeństwa i polityką IT jednostki.</p>
+      </div>
+    </div>
+    <div>
+      <div class="callout" style="font-size:22px;max-width:580px;">Połączenie kompetencji w zakresie polskich dużych modeli językowych, doświadczenia we wdrożeniach w administracji oraz sprawdzonych rozwiązań Enterprise.</div>
+      <p>Zapewniamy kompleksowe wsparcie — od uporządkowania danych urzędu, przez ich bezpieczne włączenie do systemu, po doradztwo w zakresie wyboru i przygotowania odpowiedniej infrastruktury.</p>
+      <ul>
+        <li>Uporządkowanie danych urzędu</li>
+        <li>Bezpieczne włączenie danych do systemu</li>
+        <li>Doradztwo w zakresie infrastruktury</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 13: BACK COVER -->
+<div class="page dark back-cover" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%, rgba(187,38,73,0.06) 0%, transparent 50%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;text-align:center;">
+    <div class="section-label" style="margin-bottom:4vh;">Zapraszamy do kontaktu</div>
+    <h2 style="font-size:clamp(3rem,6vw,5.4rem);margin-bottom:4vh;">Quantica Lab</h2>
+    <div class="accent-line" style="margin:0 auto 4vh auto;"></div>
+    <p class="contact-line">Quanticalab Sp. z o.o.</p>
+    <p class="contact-line">kontakt@quanticalab.ai</p>
+    <p class="contact-line">www.quanticalab.ai</p>
+    <a href="mailto:kontakt@quanticalab.ai" class="cta-btn">Napisz do nas</a>
+  </div>
+</div>
+
+</div>
+
+<div id="dot-nav"></div>
+<div class="arrow-hint" id="arrow-hint">← →  Nawiguj strzałkami</div>
+
+<script>
+(function(){
+  var BASE_W = 1440, BASE_H = 900;
+  document.querySelectorAll('.page').forEach(function(page) {
+    var inner = document.createElement('div');
+    inner.className = 'page-inner';
+    while (page.firstChild) inner.appendChild(page.firstChild);
+    page.appendChild(inner);
+  });
+  function applyScale() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var s = Math.min(vw/BASE_W, vh/BASE_H);
+    document.documentElement.style.setProperty('--page-scale', s);
+    document.querySelectorAll('.page-inner').forEach(function(el) {
+      var offsetX = (vw - BASE_W*s) / 2;
+      var offsetY = (vh - BASE_H*s) / 2;
+      el.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + s + ')';
+    });
+  }
+  applyScale();
+  window.addEventListener('resize', applyScale);
+  var mag = document.getElementById('magazine');
+  var pages = document.querySelectorAll('.page');
+  var total = pages.length, current = 0, isAnimating = false;
+  var dotNav = document.getElementById('dot-nav');
+  pages.forEach(function(_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', function() { goTo(i); });
+    dotNav.appendChild(d);
+  });
+  function goTo(idx) {
+    if (idx < 0 || idx >= total || isAnimating) return;
+    isAnimating = true; current = idx;
+    mag.style.transform = 'translateX(-' + (current * 100) + 'vw)';
+    updateUI();
+    setTimeout(function(){ isAnimating = false; }, 650);
+  }
+  function updateUI() {
+    var dots = dotNav.querySelectorAll('.dot');
+    var theme = pages[current].dataset.theme;
+    var hint = document.getElementById('arrow-hint');
+    dots.forEach(function(d, i) {
+      d.classList.toggle('active', i === current);
+      d.classList.toggle('on-light', theme === 'light');
+    });
+    hint.classList.toggle('on-light', theme === 'light');
+    if (current > 0) hint.style.opacity = '0';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+  });
+  var wheelTimeout;
+  document.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    if (wheelTimeout) return;
+    wheelTimeout = setTimeout(function(){ wheelTimeout = null; }, 800);
+    if (e.deltaX > 30 || e.deltaY > 30) goTo(current + 1);
+    else if (e.deltaX < -30 || e.deltaY < -30) goTo(current - 1);
+  }, { passive: false });
+  var touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    var dx = touchStartX - e.changedTouches[0].clientX;
+    var dy = touchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      dx > 0 ? goTo(current + 1) : goTo(current - 1);
+    }
+  }, { passive: true });
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Quantica Lab — Oferta szkoleń AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{overflow:hidden;width:100vw;height:100vh;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;}
+::selection{background:#BB2649;color:#fff;}
+:root{--accent:#BB2649;--dark:#050505;--light:#f5f5f0;--mid:#e8e5df;--text-dark:#111;--text-light:#f0ece6;--text-muted-dark:rgba(240,236,230,0.7);--text-muted-light:rgba(17,17,17,0.6);--page-scale:1;}
+h1,h2,h3,h4,h5,h6,.font-display{font-family:'Archivo Black',sans-serif;font-weight:400;letter-spacing:-0.02em;line-height:1.05;}
+#magazine{display:flex;height:100vh;width:max-content;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1);}
+.page{width:100vw;height:100vh;position:relative;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch;}
+.page-inner{width:1440px;height:900px;transform-origin:top left;transform:scale(var(--page-scale));display:flex;flex-direction:column;justify-content:flex-end;padding:54px 100px 90px 100px;position:relative;}
+.page.dark{background:var(--dark);color:var(--text-light);}
+.page.dark p,.page.dark li{color:var(--text-muted-dark);opacity:0.88;}
+.page.dark .callout{opacity:0.8;}
+.page.light{background:var(--light);color:var(--text-dark);}
+.page.light p,.page.light li{color:var(--text-muted-light);opacity:0.88;}
+.page.light .callout{opacity:0.8;}
+.page.alt{background:#fff;color:var(--text-dark);}
+.page.alt p,.page.alt li{color:var(--text-muted-light);opacity:0.88;}
+.section-label{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;margin-bottom:24px;color:var(--accent);}
+.page h2{font-size:68px;margin-bottom:24px;line-height:1.1;}
+.page h3{font-size:26px;margin-bottom:14px;line-height:1.15;font-family:'Archivo Black',sans-serif;}
+.page h4{font-size:18px;margin-bottom:10px;line-height:1.2;font-family:'Archivo Black',sans-serif;text-transform:uppercase;letter-spacing:0.04em;}
+.page p{font-size:19px;line-height:1.75;margin-bottom:14px;max-width:620px;}
+.page .lead{font-size:22px;line-height:1.65;font-weight:300;}
+.page .small{font-size:15px;line-height:1.65;margin-bottom:10px;}
+.callout{font-size:24px;line-height:1.5;font-weight:300;font-style:italic;border-left:3px solid var(--accent);padding-left:28px;margin:20px 0;max-width:520px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;align-items:start;}
+.four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:32px;align-items:start;}
+.step-num{font-family:'Archivo Black',sans-serif;font-size:72px;color:var(--accent);opacity:0.25;line-height:1;margin-bottom:6px;}
+.step-num-small{font-family:'Archivo Black',sans-serif;font-size:44px;color:var(--accent);opacity:0.3;line-height:1;margin-bottom:8px;}
+.page ul{list-style:none;padding:0;}
+.page ul li{padding:4px 0;padding-left:1.3em;position:relative;font-size:14.5px;line-height:1.55;}
+.page ul li::before{content:'';position:absolute;left:0;top:0.95em;width:5px;height:5px;background:var(--accent);border-radius:50%;}
+.module-block{margin-bottom:18px;}
+.module-block h4{font-size:15px;color:var(--accent);margin-bottom:4px;letter-spacing:0.08em;}
+.module-block .mod-title{font-family:'Archivo Black',sans-serif;font-size:17px;margin-bottom:8px;line-height:1.15;}
+#dot-nav{position:fixed;right:2vw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:100;}
+#dot-nav .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);background:transparent;cursor:pointer;transition:all 0.3s;}
+#dot-nav .dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.3);}
+#dot-nav .dot.on-light{border-color:rgba(0,0,0,0.3);}
+#dot-nav .dot.on-light.active{border-color:var(--accent);}
+.arrow-hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.3;z-index:100;color:#fff;font-family:'Space Grotesk',sans-serif;transition:opacity 0.3s;}
+.arrow-hint.on-light{color:#111;}
+.page-logo{position:absolute;top:45px;left:100px;}
+.page-logo img{height:36px;display:block;}
+.page-logo-right{position:absolute;top:45px;right:100px;}
+.page-logo-right img{height:36px;display:block;}
+.cover-issue{position:absolute;top:45px;right:100px;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.4;}
+.cover h1{font-size:130px;line-height:0.95;margin-bottom:28px;}
+.cover .tagline{font-size:24px;font-weight:300;opacity:0.6;margin-bottom:8px;}
+.cover .sub{font-size:18px;opacity:0.4;max-width:520px;}
+.back-cover .page-inner{justify-content:center;align-items:center;text-align:center;}
+.back-cover h2{font-size:77px;margin-bottom:18px;}
+.back-cover .contact-line{font-size:20px;opacity:0.5;margin-bottom:8px;}
+.back-cover .cta-btn{display:inline-block;margin-top:36px;padding:16px 48px;border:2px solid var(--accent);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:all 0.3s;}
+.back-cover .cta-btn:hover{background:var(--accent);color:#fff;}
+.accent-line{width:60px;height:3px;background:var(--accent);margin-bottom:28px;}
+.training-meta{font-size:13px;letter-spacing:0.15em;text-transform:uppercase;opacity:0.45;margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<div id="magazine">
+
+<!-- PAGE 1: COVER -->
+<div class="page dark cover" data-theme="dark">
+  <div class="page-logo"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="cover-issue">Oferta szkoleń AI / 2026</div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 80%, rgba(187,38,73,0.08) 0%, transparent 60%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;">
+    <p class="tagline">Quantica Lab</p>
+    <h1>Szkolenia AI<br>dla organizacji</h1>
+    <div class="accent-line"></div>
+    <p class="sub">Praktyczne warsztaty — od podstaw dla wszystkich pracowników po zaawansowane strategie dla zarządów. Bez żargonu, bez marketingowych obietnic.</p>
+  </div>
+</div>
+
+<!-- PAGE 2: KONTEKST -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Dlaczego teraz</div>
+  <h2>Kompetencje AI jako<br>element zarządzania</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Rozwój kompetencji w obszarze AI staje się elementem odpowiedzialnego zarządzania organizacją. Decyduje o efektywności operacyjnej, trafności decyzji i zdolności do budowania przewagi konkurencyjnej.</p>
+      <p>Zgodnie z <strong>AI Act</strong> organizacje wykorzystujące systemy AI są zobowiązane do zapewnienia odpowiedniego poziomu wiedzy i świadomości pracowników (tzw. <em>AI literacy</em>) — rozumienia możliwości technologii, jej ograniczeń, ryzyk i zasad bezpiecznego wykorzystania.</p>
+    </div>
+    <div>
+      <div class="callout">„Shadow AI" — pracownicy korzystają z zewnętrznych narzędzi AI bez jasnych wytycznych dotyczących bezpieczeństwa danych czy odpowiedzialności za wyniki.</div>
+      <p>W praktyce oznacza to realne ryzyko, zarówno operacyjne, jak i prawne. Formalne szkolenie porządkuje to, co i tak już się dzieje — i zamienia ryzyko w kompetencję.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: NASZE PODEJŚCIE -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Nasze podejście</div>
+  <h2>Praktycy, nie<br>wykładowcy</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Nasze podejście opiera się na pracy na rzeczywistych procesach i danych organizacji. Jesteśmy praktykami — tworzymy i wdrażamy rozwiązania AI — dlatego koncentrujemy się na tym, co ma realny sens biznesowy.</p>
+      <p>Unikamy ogólnych przykładów i modnych narracji. Szkolenia mają charakter warsztatowy i prowadzą do konkretnych rezultatów.</p>
+    </div>
+    <div>
+      <h3>Co dają nasze szkolenia</h3>
+      <ul>
+        <li>Uporządkowanie wiedzy i zasad korzystania z AI w organizacji</li>
+        <li>Zdefiniowanie inicjatyw i pierwszych kroków wdrożeniowych</li>
+        <li>Bezpieczeństwo danych i zgodność z regulacjami</li>
+        <li>Podejmowanie świadomych decyzji technologicznych</li>
+        <li>Budowa wspólnego języka AI w całej organizacji</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: KATALOG -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Katalog szkoleń</div>
+  <h2>Cztery ścieżki,<br>cztery grupy odbiorców</h2>
+  <div class="four-col" style="margin-top:2vh;">
+    <div>
+      <div class="step-num">01</div>
+      <h3>Start z AI?</h3>
+      <p class="small">Dwugodzinne spotkanie robocze. Szybka ocena, czy AI ma sens w organizacji i od czego zacząć.</p>
+      <p class="small" style="opacity:0.5;">Dla: zarządów rozważających wejście w AI</p>
+    </div>
+    <div>
+      <div class="step-num">02</div>
+      <h3>AI Literacy</h3>
+      <p class="small">Szkolenie wprowadzające. Wspólny język, bezpieczeństwo, regulacje.</p>
+      <p class="small" style="opacity:0.5;">Dla: wszystkich pracowników</p>
+    </div>
+    <div>
+      <div class="step-num">03</div>
+      <h3>Projekty</h3>
+      <p class="small">Warsztaty operacyjne dla kadry kierowniczej. Od kierunku do konkretnych inicjatyw.</p>
+      <p class="small" style="opacity:0.5;">Dla: menedżerów i liderów projektów</p>
+    </div>
+    <div>
+      <div class="step-num">04</div>
+      <h3>Strategia</h3>
+      <p class="small">Warsztaty strategiczne dla zarządów. Rola AI w modelu biznesowym.</p>
+      <p class="small" style="opacity:0.5;">Dla: zarządów i dyrekcji</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: START Z AI? -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="training-meta">Szkolenie 01 · Format: 2h intensywne spotkanie robocze</div>
+  <h2>Start z AI?</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Dwugodzinne, intensywne spotkanie robocze, które pozwala szybko ocenić, czy i w jakim zakresie AI ma realny sens w organizacji.</p>
+      <p>Pracujemy na konkretnych procesach i wyzwaniach firmy — bez technicznych wykładów i bez marketingowych obietnic.</p>
+      <div class="callout">Efekt: wskazujemy pierwsze, racjonalne kroki prowadzące do świadomego rozpoczęcia inicjatyw AI oraz obszary, w których technologia może przynieść wymierny efekt.</div>
+    </div>
+    <div>
+      <div class="module-block">
+        <h4>Moduł 01</h4>
+        <div class="mod-title">Cel i kontekst biznesowy</div>
+        <ul>
+          <li>Ustalenie głównego powodu wdrażania AI — optymalizacja kosztów, poprawa jakości, redukcja ryzyka, efektywność, nowa wartość dla klientów</li>
+          <li>Doprecyzowanie oczekiwanego efektu biznesowego</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 02</h4>
+        <div class="mod-title">Analiza procesów i identyfikacja szans</div>
+        <ul>
+          <li>Analiza kluczowych procesów i punktów wrażliwych w organizacji</li>
+          <li>Wskazanie miejsc, w których AI może przynieść najszybszy lub największy efekt</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 03</h4>
+        <div class="mod-title">Definiowanie inicjatyw i plan działania</div>
+        <ul>
+          <li>Sformułowanie 2–3 inicjatyw wraz z celem, zakresem i wymaganymi danymi</li>
+          <li>Wskazanie projektu o najwyższej wykonalności jako punktu startowego</li>
+          <li>Wstępna analiza dostępności danych i możliwości integracyjnych</li>
+          <li>Identyfikacja najważniejszych ryzyk i ograniczeń</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: AI LITERACY -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="training-meta">Szkolenie 02 · Dla całej organizacji</div>
+  <h2>AI Literacy</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Szkolenie wprowadzające, które buduje wspólny język i zrozumienie AI w ramach organizacji.</p>
+      <p>Uczestnicy zdobywają wiedzę o tym, czym jest AI i jak działa, a przede wszystkim uczą się rozpoznawać realne możliwości jej zastosowania w codziennej pracy oraz świadomie oceniać jej ograniczenia.</p>
+      <div class="callout">Program ma charakter praktyczny i koncentruje się na odpowiedzialnym, bezpiecznym i efektywnym wykorzystaniu narzędzi AI w środowisku zawodowym.</div>
+    </div>
+    <div>
+      <div class="module-block">
+        <h4>Moduł 01</h4>
+        <div class="mod-title">Podstawy AI — demistyfikacja technologii</div>
+        <ul>
+          <li>Czym jest AI, ML, generatywna AI — wyjaśnienie bez żargonu</li>
+          <li>Jak działają modele językowe — intuicyjnie, bez matematyki</li>
+          <li>Możliwości i ograniczenia — co AI potrafi, a czego nie</li>
+          <li>Praktyczne zastosowania w codziennej pracy (teksty, analiza, automatyzacja)</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 02</h4>
+        <div class="mod-title">Bezpieczne korzystanie z AI</div>
+        <ul>
+          <li>Zasady bezpieczeństwa danych przy pracy z AI</li>
+          <li>Co można, a czego nie można wprowadzać do narzędzi AI</li>
+          <li>Rozpoznawanie halucynacji i weryfikacja wyników</li>
+          <li>Polityka firmy dotycząca AI — dozwolone narzędzia i praktyki</li>
+          <li>Ochrona danych osobowych i poufnych informacji biznesowych</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 03</h4>
+        <div class="mod-title">Regulacje i etyka AI</div>
+        <ul>
+          <li>AI Act — kluczowe wymagania i co oznaczają dla pracowników</li>
+          <li>Klasyfikacja ryzyka systemów AI</li>
+          <li>Etyka AI: stronniczość, transparentność, odpowiedzialność</li>
+          <li>Human-in-the-loop — dlaczego decyzja zawsze należy do człowieka</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 7: PROJEKTY -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="training-meta">Szkolenie 03 · Dla kadry kierowniczej · Z wywiadami przygotowawczymi</div>
+  <h2>AI dla kadry<br>kierowniczej: projekty</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Warsztaty operacyjne, których celem jest przełożenie kierunku działań w obszarze AI na konkretne inicjatywy.</p>
+      <p>Pracujemy na realnych procesach organizacji, identyfikując projekty o największym sensie biznesowym i najwyższej wykonalności. Efektem jest uporządkowana lista inicjatyw wraz z oceną ich opłacalności, wymagań w zakresie danych oraz gotowości organizacyjnej.</p>
+      <div class="callout">Przygotowanie: dwa 30-minutowe wywiady z kierownictwem lub pracownikami wykorzystującymi AI dzisiaj.</div>
+      <div class="module-block">
+        <h4>Moduł 01</h4>
+        <div class="mod-title">Podstawy AI</div>
+        <ul>
+          <li>Czym jest AI, ML, generatywna AI — wyjaśnienie bez żargonu</li>
+          <li>Jak działają modele językowe — intuicyjnie, bez matematyki</li>
+          <li>Aktualny stan technologii: generatywna AI, agenci, automatyzacja</li>
+          <li>Przykłady wdrożeń w różnych branżach i trendy</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="module-block">
+        <h4>Moduł 02</h4>
+        <div class="mod-title">Analiza procesów pod kątem AI</div>
+        <ul>
+          <li>Kryteria oceny potencjału automatyzacji — powtarzalność, złożoność, dane</li>
+          <li>Warsztat: mapowanie procesów realizowanych w danym dziale</li>
+          <li>Identyfikacja „quick wins"</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 03</h4>
+        <div class="mod-title">Przygotowanie do projektów AI</div>
+        <ul>
+          <li>Ocena dostępności i jakości danych</li>
+          <li>Ocena kompetencji zespołu i luk do uzupełnienia</li>
+          <li>Scenariusze integracji z istniejącymi narzędziami (ERP, CRM, workflow)</li>
+          <li>Dyskusja warsztatowa — priorytetyzacja projektów</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 04</h4>
+        <div class="mod-title">Planowanie wdrożenia i ROI</div>
+        <ul>
+          <li>Definiowanie mierników sukcesu (KPI przed/po)</li>
+          <li>Tworzenie scenariuszy użycia i planu pilotażowego</li>
+          <li>Zarządzanie zmianą — przygotowanie zespołów</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 8: STRATEGIA -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="training-meta">Szkolenie 04 · Dla zarządów i dyrekcji · Z wywiadami przygotowawczymi</div>
+  <h2>AI dla kadry<br>kierowniczej: strategia</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Warsztaty strategiczne dla zarządów, dyrektorów i menedżerów odpowiedzialnych za rozwój organizacji.</p>
+      <p>Celem jest określenie realnej roli AI w modelu biznesowym firmy oraz wypracowanie spójnych zasad podejmowania decyzji w obszarze inwestycji technologicznych. Pracujemy na danych i procesach organizacji, oddzielając rzeczywiste możliwości od marketingowych narracji.</p>
+      <div class="callout">Przygotowanie: dwa 30-minutowe wywiady z kierownictwem lub pracownikami wykorzystującymi AI dzisiaj.</div>
+      <div class="module-block">
+        <h4>Moduł 01</h4>
+        <div class="mod-title">Podstawy AI</div>
+        <ul>
+          <li>Czym jest AI, ML, generatywna AI — bez żargonu</li>
+          <li>Jak działają modele językowe — intuicyjnie, bez matematyki</li>
+          <li>Aktualny stan technologii, przykłady wdrożeń, trendy</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="module-block">
+        <h4>Moduł 02</h4>
+        <div class="mod-title">Strategia AI — warsztaty</div>
+        <ul>
+          <li>Definiowanie wizji AI dla organizacji</li>
+          <li>Strategia firmy i priorytetyzacja projektów AI</li>
+          <li>Wybór obszarów wdrożenia — matryca wpływ/wykonalność</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 03</h4>
+        <div class="mod-title">Analiza gotowości cyfrowej organizacji</div>
+        <ul>
+          <li>Dane: jakość, dostępność, integracja źródeł</li>
+          <li>Platforma i technologia: chmura, środowisko lokalne, analityka, ML, API, middleware</li>
+          <li>Kompetencje: inżynieria danych, analityka, kompetencje AI</li>
+          <li>Procesy: kultura eksperymentowania, podatność na automatyzację</li>
+          <li>Governance: odpowiedzialność, bezpieczeństwo, zgodność z przepisami</li>
+        </ul>
+      </div>
+      <div class="module-block">
+        <h4>Moduł 04</h4>
+        <div class="mod-title">Przygotowanie do projektów AI</div>
+        <ul>
+          <li>Jak zaprojektować AI governance</li>
+          <li>Kluczowe działania na podstawie oceny gotowości cyfrowej</li>
+          <li>Zarządzanie zmianą — organizacja i pracownicy</li>
+          <li>Roadmapa krótko- i długoterminowa</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 9: BACK COVER -->
+<div class="page dark back-cover" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%, rgba(187,38,73,0.06) 0%, transparent 50%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;text-align:center;">
+    <div class="section-label" style="margin-bottom:4vh;">Zapraszamy do kontaktu</div>
+    <h2 style="font-size:clamp(3rem,6vw,5.4rem);margin-bottom:4vh;">Quantica Lab</h2>
+    <div class="accent-line" style="margin:0 auto 4vh auto;"></div>
+    <p class="contact-line">Quanticalab Sp. z o.o.</p>
+    <p class="contact-line">kontakt@quanticalab.ai</p>
+    <p class="contact-line">www.quanticalab.ai</p>
+    <a href="mailto:kontakt@quanticalab.ai" class="cta-btn">Napisz do nas</a>
+  </div>
+</div>
+
+</div>
+
+<div id="dot-nav"></div>
+<div class="arrow-hint" id="arrow-hint">← →  Nawiguj strzałkami</div>
+
+<script>
+(function(){
+  var BASE_W = 1440, BASE_H = 900;
+  document.querySelectorAll('.page').forEach(function(page) {
+    var inner = document.createElement('div');
+    inner.className = 'page-inner';
+    while (page.firstChild) inner.appendChild(page.firstChild);
+    page.appendChild(inner);
+  });
+  function applyScale() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var s = Math.min(vw/BASE_W, vh/BASE_H);
+    document.documentElement.style.setProperty('--page-scale', s);
+    document.querySelectorAll('.page-inner').forEach(function(el) {
+      var offsetX = (vw - BASE_W*s) / 2;
+      var offsetY = (vh - BASE_H*s) / 2;
+      el.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + s + ')';
+    });
+  }
+  applyScale();
+  window.addEventListener('resize', applyScale);
+  var mag = document.getElementById('magazine');
+  var pages = document.querySelectorAll('.page');
+  var total = pages.length, current = 0, isAnimating = false;
+  var dotNav = document.getElementById('dot-nav');
+  pages.forEach(function(_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', function() { goTo(i); });
+    dotNav.appendChild(d);
+  });
+  function goTo(idx) {
+    if (idx < 0 || idx >= total || isAnimating) return;
+    isAnimating = true; current = idx;
+    mag.style.transform = 'translateX(-' + (current * 100) + 'vw)';
+    updateUI();
+    setTimeout(function(){ isAnimating = false; }, 650);
+  }
+  function updateUI() {
+    var dots = dotNav.querySelectorAll('.dot');
+    var theme = pages[current].dataset.theme;
+    var hint = document.getElementById('arrow-hint');
+    dots.forEach(function(d, i) {
+      d.classList.toggle('active', i === current);
+      d.classList.toggle('on-light', theme === 'light');
+    });
+    hint.classList.toggle('on-light', theme === 'light');
+    if (current > 0) hint.style.opacity = '0';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+  });
+  var wheelTimeout;
+  document.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    if (wheelTimeout) return;
+    wheelTimeout = setTimeout(function(){ wheelTimeout = null; }, 800);
+    if (e.deltaX > 30 || e.deltaY > 30) goTo(current + 1);
+    else if (e.deltaX < -30 || e.deltaY < -30) goTo(current - 1);
+  }, { passive: false });
+  var touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    var dx = touchStartX - e.changedTouches[0].clientX;
+    var dy = touchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      dx > 0 ? goTo(current + 1) : goTo(current - 1);
+    }
+  }, { passive: true });
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

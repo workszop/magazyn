@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Quantica Lab — System RAG</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{overflow:hidden;width:100vw;height:100vh;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;}
+::selection{background:#BB2649;color:#fff;}
+:root{--accent:#BB2649;--dark:#050505;--light:#f5f5f0;--mid:#e8e5df;--text-dark:#111;--text-light:#f0ece6;--text-muted-dark:rgba(240,236,230,0.7);--text-muted-light:rgba(17,17,17,0.6);--page-scale:1;}
+h1,h2,h3,h4,h5,h6,.font-display{font-family:'Archivo Black',sans-serif;font-weight:400;letter-spacing:-0.02em;line-height:1.05;}
+#magazine{display:flex;height:100vh;width:max-content;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1);}
+.page{width:100vw;height:100vh;position:relative;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch;}
+.page-inner{width:1440px;height:900px;transform-origin:top left;transform:scale(var(--page-scale));display:flex;flex-direction:column;justify-content:flex-end;padding:54px 100px 90px 100px;position:relative;}
+.page.dark{background:var(--dark);color:var(--text-light);}
+.page.dark p,.page.dark li{color:var(--text-muted-dark);opacity:0.88;}
+.page.dark .callout{opacity:0.8;}
+.page.light{background:var(--light);color:var(--text-dark);}
+.page.light p,.page.light li{color:var(--text-muted-light);opacity:0.88;}
+.page.light .callout{opacity:0.8;}
+.page.alt{background:#fff;color:var(--text-dark);}
+.page.alt p,.page.alt li{color:var(--text-muted-light);opacity:0.88;}
+.section-label{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;margin-bottom:24px;color:var(--accent);}
+.page h2{font-size:68px;margin-bottom:26px;line-height:1.1;}
+.page h3{font-size:26px;margin-bottom:14px;line-height:1.15;font-family:'Archivo Black',sans-serif;}
+.page p{font-size:18px;line-height:1.7;margin-bottom:14px;max-width:620px;}
+.page .lead{font-size:21px;line-height:1.6;font-weight:300;}
+.page .small{font-size:15.5px;line-height:1.6;}
+.callout{font-size:24px;line-height:1.5;font-weight:300;font-style:italic;border-left:3px solid var(--accent);padding-left:28px;margin:20px 0;max-width:540px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;align-items:start;}
+.four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:32px;align-items:start;}
+.step-num{font-family:'Archivo Black',sans-serif;font-size:72px;color:var(--accent);opacity:0.25;line-height:1;margin-bottom:6px;}
+.step-num-small{font-family:'Archivo Black',sans-serif;font-size:48px;color:var(--accent);opacity:0.3;line-height:1;margin-bottom:8px;}
+.page ul{list-style:none;padding:0;}
+.page ul li{padding:5px 0;padding-left:1.4em;position:relative;font-size:16px;line-height:1.55;}
+.page ul li::before{content:'';position:absolute;left:0;top:1.05em;width:6px;height:6px;background:var(--accent);border-radius:50%;}
+#dot-nav{position:fixed;right:2vw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:100;}
+#dot-nav .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);background:transparent;cursor:pointer;transition:all 0.3s;}
+#dot-nav .dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.3);}
+#dot-nav .dot.on-light{border-color:rgba(0,0,0,0.3);}
+#dot-nav .dot.on-light.active{border-color:var(--accent);}
+.arrow-hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.3;z-index:100;color:#fff;font-family:'Space Grotesk',sans-serif;transition:opacity 0.3s;}
+.arrow-hint.on-light{color:#111;}
+.page-logo{position:absolute;top:45px;left:100px;}
+.page-logo img{height:36px;display:block;}
+.page-logo-right{position:absolute;top:45px;right:100px;}
+.page-logo-right img{height:36px;display:block;}
+.cover-issue{position:absolute;top:45px;right:100px;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.4;}
+.cover h1{font-size:120px;line-height:0.95;margin-bottom:28px;}
+.cover .tagline{font-size:24px;font-weight:300;opacity:0.6;margin-bottom:8px;}
+.cover .sub{font-size:18px;opacity:0.4;max-width:520px;}
+.back-cover .page-inner{justify-content:center;align-items:center;text-align:center;}
+.back-cover h2{font-size:77px;margin-bottom:18px;}
+.back-cover .contact-line{font-size:20px;opacity:0.5;margin-bottom:8px;}
+.back-cover .cta-btn{display:inline-block;margin-top:36px;padding:16px 48px;border:2px solid var(--accent);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:all 0.3s;}
+.back-cover .cta-btn:hover{background:var(--accent);color:#fff;}
+.accent-line{width:60px;height:3px;background:var(--accent);margin-bottom:28px;}
+.big-stat{font-family:'Archivo Black',sans-serif;font-size:108px;line-height:0.95;color:var(--accent);letter-spacing:-0.04em;}
+.big-stat-label{font-size:15px;letter-spacing:0.15em;text-transform:uppercase;opacity:0.5;margin-top:8px;}
+.risk-block{border-left:2px solid rgba(187,38,73,0.4);padding-left:24px;}
+.risk-num{font-family:'Archivo Black',sans-serif;font-size:13px;letter-spacing:0.2em;color:var(--accent);margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<div id="magazine">
+
+<!-- PAGE 1: COVER -->
+<div class="page dark cover" data-theme="dark">
+  <div class="page-logo"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="cover-issue">System RAG / Edycja 2026</div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 80%, rgba(187,38,73,0.08) 0%, transparent 60%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;">
+    <p class="tagline">Quantica Lab</p>
+    <h1>AI oparta<br>na wiedzy</h1>
+    <div class="accent-line"></div>
+    <p class="sub">System RAG dla polskich organizacji. Zaufana infrastruktura, zweryfikowane źródła, pełna kontrola nad danymi.</p>
+  </div>
+</div>
+
+<!-- PAGE 2: PODSUMOWANIE DLA KIEROWNICTWA -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Podsumowanie dla kierownictwa</div>
+  <h2>AI jako decyzja<br>strategiczna</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Wdrożenie AI to dziś decyzja strategiczna — dotycząca nie tylko produktywności, ale także bezpieczeństwa informacyjnego i autonomii działania organizacji.</p>
+      <p>W warunkach rosnącej niestabilności geopolitycznej i uzależnienia od zagranicznych dostawców technologii wybór narzędzi AI oznacza jednocześnie wybór tego, kto przetwarza i wykorzystuje dane, procesy i wiedzę organizacji.</p>
+    </div>
+    <div>
+      <div class="callout">Rozwiązania, które zapewniają pełną kontrolę nad danymi oraz możliwość przetwarzania ich w zaufanej infrastrukturze, stanowią fundament systemu RAG Quantica Lab.</div>
+      <p>Polskie rozwiązanie, dostosowane do języka polskiego i realiów polskich organizacji. Bazuje na dokumentach organizacji i może być wdrażane w jej infrastrukturze — bez uzależnienia od zagranicznych platform.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: PROBLEM -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Problem</div>
+  <h2>Wiedza jest,<br>ale nie można jej<br>szybko znaleźć</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Organizacje gromadzą przez lata ogromne zasoby wiedzy: dokumentację, procedury, regulaminy, akty prawne, materiały szkoleniowe, archiwa spraw.</p>
+      <p>W praktyce te zasoby pozostają trudno dostępne — rozproszone między systemami, zapisane w różnych formatach, znane nielicznym. Pracownicy spędzają znaczną część czasu na wyszukiwaniu informacji zamiast na realizacji właściwych zadań.</p>
+    </div>
+    <div>
+      <div class="callout">Kiedy ludzie odchodzą — wiedza odchodzi razem z nimi.</div>
+      <p>Odpowiedzi udzielane klientom, partnerom lub współpracownikom bywają niespójne albo zależą od indywidualnej wiedzy konkretnych osób. W odpowiedzi na ten problem pracownicy coraz częściej sięgają po GPT, Claude czy Gemini — które działają sprawnie, ale niosą ze sobą konkretne ryzyka.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: RYZYKA 1 & 2 -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Ryzyka ogólnodostępnej AI · 01–02</div>
+  <h2>Cztery ryzyka,<br>których nie wolno zbagatelizować</h2>
+  <div class="two-col" style="margin-top:2vh;">
+    <div class="risk-block">
+      <div class="risk-num">01 · Po pierwsze</div>
+      <h3>Nie znają Twoich dokumentów</h3>
+      <p class="small">Zagraniczne modele AI nie znają dokumentów ani procedur organizacji. Odpowiadają na podstawie ogólnej wiedzy — nie tej konkretnej, aktualnej, zweryfikowanej, która obowiązuje w danej instytucji.</p>
+      <p class="small">Mogą udzielać odpowiedzi niezgodnych ze stanem faktycznym, a w skrajnych przypadkach po prostu zmyślać. Dla organizacji działającej w oparciu o precyzyjne regulacje to ryzyko operacyjne i reputacyjne.</p>
+    </div>
+    <div class="risk-block">
+      <div class="risk-num">02 · Po drugie</div>
+      <h3>Tylko częściowy polski</h3>
+      <p class="small">Większość globalnych modeli AI tylko częściowo uwzględnia język polski oraz lokalny kontekst prawny i kulturowy. Generowane teksty zawierają kalki językowe, nienaturalne konstrukcje lub uproszczenia wynikające z anglosaskich wzorców komunikacji.</p>
+      <p class="small">W praktyce: niższa jakość komunikacji z klientami i partnerami oraz ryzyko przekazywania informacji nieprecyzyjnych lub niedopasowanych do kontekstu.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: RYZYKA 3 & 4 -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Ryzyka ogólnodostępnej AI · 03–04</div>
+  <h2>Dane, ciągłość,<br>dostawca</h2>
+  <div class="two-col" style="margin-top:2vh;">
+    <div class="risk-block">
+      <div class="risk-num">03 · Po trzecie</div>
+      <h3>Dane poza Polską i UE</h3>
+      <p class="small">Informacje wprowadzane do publicznych narzędzi AI — dokumenty wewnętrzne, dane osobowe, korespondencja, procedury — mogą być przetwarzane na serwerach poza Polską i UE, przy ograniczonej kontroli organizacji nad ich dalszym wykorzystaniem.</p>
+      <p class="small">To ryzyko prawne, ale przede wszystkim ryzyko utraty kontroli nad informacją, która jest jednym z kluczowych zasobów każdej organizacji.</p>
+    </div>
+    <div class="risk-block">
+      <div class="risk-num">04 · Po czwarte</div>
+      <h3>Systemowa zależność od dostawcy</h3>
+      <p class="small">Korzystanie z zewnętrznych platform AI oznacza zależność od ich dostawców — w zasadach przetwarzania danych, dostępności usług, modelu rozliczeń, jak i kierunku rozwoju technologii.</p>
+      <p class="small">W środowisku, gdzie relacje geopolityczne między blokami technologicznymi są zmienne, uzależnienie od zagranicznych platform AI stanowi ryzyko, które powinno być świadomie zarządzane, a nie ignorowane.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: SUWERENNOŚĆ -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Decyzja zarządcza</div>
+  <h2>Suwerenność technologiczna</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Suwerenność technologiczna jest jednym z kluczowych obszarów zarządzania ryzykiem — zdolność organizacji do samodzielnego decydowania o tym, gdzie przetwarzane są jej dane, kto ma do nich dostęp i na jakich warunkach.</p>
+      <p>W kontekście AI nabiera to szczególnego znaczenia. Modele AI trenowane są na ogromnych zbiorach danych, a ich skład wpływa na działanie modelu — wiedzę o świecie i języku, sposób interpretacji informacji oraz reprodukowane wzorce kulturowe.</p>
+    </div>
+    <div>
+      <div class="callout">Wybór rozwiązań opartych na zweryfikowanych źródłach, zgodnych z AI Act, zapewnia przewidywalność, transparentność i kontrolę — oraz zgodność z wymaganiami regulacyjnymi.</div>
+      <p>To nie tylko kwestia technologii, ale element świadomego zarządzania organizacją i jej danymi. Naturalnym wyborem są rozwiązania łączące możliwości modeli językowych z kontrolą nad danymi — takie jak RAG.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 7: CZYM JEST RAG -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">RAG — Retrieval-Augmented Generation</div>
+  <h2>AI oparta na wiedzy<br>organizacji</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">RAG to podejście do budowy systemów AI, w którym model nie odpowiada na podstawie ogólnej wiedzy, lecz w oparciu o dokumenty wskazane przez organizację — regulaminy, procedury, dokumentację wewnętrzną, materiały szkoleniowe.</p>
+      <div class="callout">Odpowiedzi są spójne, zgodne ze stanem faktycznym i możliwe do zweryfikowania w źródłach.</div>
+    </div>
+    <div>
+      <h3>Dwuetapowe działanie</h3>
+      <ul>
+        <li><strong>Etap 1 — Retrieval.</strong> System wyszukuje najbardziej trafne fragmenty w zatwierdzonej bazie dokumentów.</li>
+        <li><strong>Etap 2 — Generation.</strong> Na ich podstawie przygotowuje odpowiedź — z zachowaniem kontekstu i źródeł.</li>
+      </ul>
+      <p>W efekcie odpowiedź nie powstaje „z pamięci" modelu, tylko z konkretnego, wskazanego fragmentu dokumentu organizacji — który można wskazać, zweryfikować i zacytować.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 8: KORZYŚCI -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Korzyści</div>
+  <h2>Cztery filary<br>wartości RAG</h2>
+  <div class="four-col" style="margin-top:2vh;">
+    <div>
+      <div class="step-num">01</div>
+      <h3 style="font-size:22px;">Dopasowanie do organizacji</h3>
+      <p class="small">System korzysta z dokumentów danej organizacji i może być dostosowany do jej procedur oraz sposobu komunikacji.</p>
+    </div>
+    <div>
+      <div class="step-num">02</div>
+      <h3 style="font-size:22px;">Wiarygodność odpowiedzi</h3>
+      <p class="small">Odpowiedzi powstają na podstawie zweryfikowanych dokumentów — ograniczają ryzyko błędów i „zmyślania" informacji. Baza może być łatwo aktualizowana.</p>
+    </div>
+    <div>
+      <div class="step-num">03</div>
+      <h3 style="font-size:22px;">Bezpieczeństwo i kontrola</h3>
+      <p class="small">Baza dokumentów pozostaje pod kontrolą organizacji, a rozwiązanie może działać w bezpiecznym środowisku zgodnym z wymogami ochrony danych.</p>
+    </div>
+    <div>
+      <div class="step-num">04</div>
+      <h3 style="font-size:22px;">Efektywność operacyjna</h3>
+      <p class="small">Automatyzacja obsługi powtarzalnych zapytań przyspiesza dostęp do informacji — pracownicy skupiają się na sprawach wymagających analizy i decyzji.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 9: ZASTOSOWANIA -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Przykładowe zastosowania</div>
+  <h2>Gdzie RAG<br>pracuje</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">RAG może być wdrażany zarówno jako czatbot dla klientów, jak i jako narzędzie wewnętrzne — wspierające brokerów informacji i ułatwiające szybkie wyszukiwanie w dokumentacji.</p>
+      <p>Porządkuje wiedzę organizacji i udostępnia ją w sposób spójny, zgodny z regulacjami i bezpieczny.</p>
+    </div>
+    <div>
+      <h3>Pięć typowych zastosowań</h3>
+      <ul>
+        <li>Asystent wiedzy dla działów sprzedaży i obsługi klienta</li>
+        <li>Narzędzie wspierające działy compliance i regulacyjne</li>
+        <li>Wewnętrzny asystent organizacyjny dla pracowników</li>
+        <li>System wyszukiwania informacji w dokumentacji i procedurach</li>
+        <li>Chatbot odpowiadający na pytania klientów</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 10: POLSKI ZESPÓŁ, PLLUM -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Co wyróżnia nasz system · 01</div>
+  <h2>Polski zespół,<br>polskie rozwiązanie</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Quantica Lab to polska firma specjalizująca się w ocenie, adaptacji i wdrażaniu systemów AI dla organizacji. Nasze kompetencje obejmują analizę modeli językowych, ich dostrajanie, integrację i projektowanie rozwiązań wykorzystujących wiedzę organizacji.</p>
+      <div class="callout">W naszym systemie RAG korzystamy z modeli językowych <strong>PLLuM</strong> — rozwijanych przez polskie instytucje naukowe, dostosowanych do języka polskiego i polskiego kontekstu prawnego, kulturowego i instytucjonalnego.</div>
+    </div>
+    <div>
+      <p>Modele PLLuM powstają w sposób transparentny, na danych o zweryfikowanym pochodzeniu, zgodnie z europejskimi standardami — w tym wymaganiami AI Act.</p>
+      <p>Rozwiązanie rozwija zespół współtworzący modele PLLuM, który zna je od podstaw — od architektury i procesu trenowania po ich ograniczenia. Dzięki temu możliwe jest nie tylko efektywne wykorzystanie, ale także świadome dostosowanie do konkretnych zastosowań oraz ograniczanie ryzyk typowych dla systemów AI.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 11: DOŚWIADCZENIE + INTEL -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Co wyróżnia nasz system · 02</div>
+  <h2>Doświadczenie<br>na realnej skali</h2>
+  <div class="two-col">
+    <div>
+      <div class="big-stat">~500K</div>
+      <div class="big-stat-label">zapytań miesięcznie · mObywatel</div>
+      <p style="margin-top:32px;">Zespół posiada udokumentowane doświadczenie we wdrożeniach w organizacjach publicznych i prywatnych. Uczestniczyliśmy m.in. w budowie Wirtualnego Asystenta w aplikacji mObywatel — systemu obsługującego około pół miliona zapytań miesięcznie.</p>
+      <p>Połączenie kompetencji badawczych i doświadczenia wdrożeniowego pozwala budować rozwiązania AI, które są nie tylko zaawansowane technologicznie, ale przede wszystkim <strong>użyteczne i bezpieczne w realnych warunkach działania organizacji</strong>.</p>
+    </div>
+    <div>
+      <h3>Zaplecze technologiczne</h3>
+      <p>Rozwiązanie opiera się na architekturze klasy <strong>Enterprise RAG</strong> opracowanej przez Intel, którą dostosowujemy do języka polskiego i zastosowań w polskich organizacjach.</p>
+      <p>Wykorzystujemy sprawdzone komponenty rozwijane w najnowszych pracach nad przetwarzaniem języka i wyszukiwaniem informacji. Dobór opiera się na doświadczeniach wdrożeniowych, wynikach testów oraz własnych pracach badawczych.</p>
+      <div class="callout">Systemy o wysokiej jakości, stabilności i przewidywalnym działaniu — dostosowane do wymagań środowisk produkcyjnych.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 12: PRECYZJA + BEZPIECZEŃSTWO + WDROŻENIE -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Co wyróżnia nasz system · 03</div>
+  <h2>Precyzja, bezpieczeństwo,<br>model wdrożenia</h2>
+  <div class="three-col" style="margin-top:2vh;">
+    <div>
+      <div class="step-num-small">01</div>
+      <h3>Precyzja i dopasowanie</h3>
+      <p class="small">Hybrydowe mechanizmy wyszukiwania oraz ocena trafności wyników zwiększają precyzję odpowiedzi. Filtrowanie treści według metadanych (np. daty publikacji) wspiera pracę na aktualnych źródłach.</p>
+      <p class="small">Model zoptymalizowany pod kątem języka polskiego i realiów organizacji — z możliwością dostrojenia do specyfiki, terminologii i stylu komunikacji.</p>
+    </div>
+    <div>
+      <div class="step-num-small">02</div>
+      <h3>Bezpieczeństwo i transparentność</h3>
+      <p class="small">System korzysta wyłącznie z zatwierdzonych dokumentów i funkcjonuje w zdefiniowanym zakresie tematycznym. Mechanizmy zabezpieczające ograniczają treści niezgodne z prawem lub obraźliwe.</p>
+      <p class="small">Odpowiedzi zawierają cytowania dokumentów źródłowych. W braku informacji system nie spekuluje — informuje o braku danych i wskazuje kanał kontaktu.</p>
+    </div>
+    <div>
+      <div class="step-num-small">03</div>
+      <h3>Model wdrożenia</h3>
+      <p class="small">On-premise na infrastrukturze organizacji lub w chmurze zgodnej z jej wymaganiami bezpieczeństwa i polityką IT.</p>
+      <p class="small">Pełne wsparcie: analiza i uporządkowanie zasobów wiedzy, bezpieczne włączenie do systemu, doradztwo w zakresie infrastruktury i integracji. Każde wdrożenie poprzedza analiza jakości odpowiedzi na rzeczywistych danych organizacji.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 13: BACK COVER -->
+<div class="page dark back-cover" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%, rgba(187,38,73,0.06) 0%, transparent 50%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;text-align:center;">
+    <div class="section-label" style="margin-bottom:3vh;">Decyzja zarządcza</div>
+    <h2 style="font-size:clamp(2.6rem,5.2vw,4.6rem);margin-bottom:3vh;max-width:900px;">Komu powierzasz<br>wiedzę organizacji?</h2>
+    <p style="max-width:640px;margin:0 auto 4vh auto;font-size:19px;line-height:1.6;opacity:0.7;">Wdrożenie AI to decyzja, która wykracza poza wybór narzędzia — to decyzja o tym, komu organizacja powierza swoją wiedzę, dane i ciągłość działania.</p>
+    <div class="accent-line" style="margin:0 auto 4vh auto;"></div>
+    <p class="contact-line">Quanticalab Sp. z o.o.</p>
+    <p class="contact-line">kontakt@quanticalab.ai</p>
+    <p class="contact-line">www.quanticalab.ai</p>
+    <a href="mailto:kontakt@quanticalab.ai" class="cta-btn">Porozmawiajmy o wdrożeniu</a>
+  </div>
+</div>
+
+</div>
+
+<div id="dot-nav"></div>
+<div class="arrow-hint" id="arrow-hint">← →  Nawiguj strzałkami</div>
+
+<script>
+(function(){
+  var BASE_W = 1440, BASE_H = 900;
+  document.querySelectorAll('.page').forEach(function(page) {
+    var inner = document.createElement('div');
+    inner.className = 'page-inner';
+    while (page.firstChild) inner.appendChild(page.firstChild);
+    page.appendChild(inner);
+  });
+  function applyScale() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var s = Math.min(vw/BASE_W, vh/BASE_H);
+    document.documentElement.style.setProperty('--page-scale', s);
+    document.querySelectorAll('.page-inner').forEach(function(el) {
+      var offsetX = (vw - BASE_W*s) / 2;
+      var offsetY = (vh - BASE_H*s) / 2;
+      el.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + s + ')';
+    });
+  }
+  applyScale();
+  window.addEventListener('resize', applyScale);
+  var mag = document.getElementById('magazine');
+  var pages = document.querySelectorAll('.page');
+  var total = pages.length, current = 0, isAnimating = false;
+  var dotNav = document.getElementById('dot-nav');
+  pages.forEach(function(_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', function() { goTo(i); });
+    dotNav.appendChild(d);
+  });
+  function goTo(idx) {
+    if (idx < 0 || idx >= total || isAnimating) return;
+    isAnimating = true; current = idx;
+    mag.style.transform = 'translateX(-' + (current * 100) + 'vw)';
+    updateUI();
+    setTimeout(function(){ isAnimating = false; }, 650);
+  }
+  function updateUI() {
+    var dots = dotNav.querySelectorAll('.dot');
+    var theme = pages[current].dataset.theme;
+    var hint = document.getElementById('arrow-hint');
+    dots.forEach(function(d, i) {
+      d.classList.toggle('active', i === current);
+      d.classList.toggle('on-light', theme === 'light');
+    });
+    hint.classList.toggle('on-light', theme === 'light');
+    if (current > 0) hint.style.opacity = '0';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+  });
+  var wheelTimeout;
+  document.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    if (wheelTimeout) return;
+    wheelTimeout = setTimeout(function(){ wheelTimeout = null; }, 800);
+    if (e.deltaX > 30 || e.deltaY > 30) goTo(current + 1);
+    else if (e.deltaX < -30 || e.deltaY < -30) goTo(current - 1);
+  }, { passive: false });
+  var touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    var dx = touchStartX - e.changedTouches[0].clientX;
+    var dy = touchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      dx > 0 ? goTo(current + 1) : goTo(current - 1);
+    }
+  }, { passive: true });
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

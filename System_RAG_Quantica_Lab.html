@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Quantica Lab — System RAG</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{overflow:hidden;width:100vw;height:100vh;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;}
+::selection{background:#BB2649;color:#fff;}
+:root{--accent:#BB2649;--dark:#050505;--light:#f5f5f0;--mid:#e8e5df;--text-dark:#111;--text-light:#f0ece6;--text-muted-dark:rgba(240,236,230,0.7);--text-muted-light:rgba(17,17,17,0.6);--page-scale:1;}
+h1,h2,h3,h4,h5,h6,.font-display{font-family:'Archivo Black',sans-serif;font-weight:400;letter-spacing:-0.02em;line-height:1.05;}
+#magazine{display:flex;height:100vh;width:max-content;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1);}
+.page{width:100vw;height:100vh;position:relative;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch;}
+.page-inner{width:1440px;height:900px;transform-origin:top left;transform:scale(var(--page-scale));display:flex;flex-direction:column;justify-content:flex-end;padding:54px 100px 90px 100px;position:relative;}
+.page.dark{background:var(--dark);color:var(--text-light);}
+.page.dark p,.page.dark li{color:var(--text-muted-dark);opacity:0.88;}
+.page.dark .callout{opacity:0.8;}
+.page.light{background:var(--light);color:var(--text-dark);}
+.page.light p,.page.light li{color:var(--text-muted-light);opacity:0.88;}
+.page.light .callout{opacity:0.8;}
+.page.alt{background:#fff;color:var(--text-dark);}
+.page.alt p,.page.alt li{color:var(--text-muted-light);opacity:0.88;}
+.section-label{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;margin-bottom:24px;color:var(--accent);}
+.page h2{font-size:72px;margin-bottom:28px;line-height:1.1;}
+.page h3{font-size:29px;margin-bottom:16px;line-height:1.15;font-family:'Archivo Black',sans-serif;}
+.page p{font-size:19px;line-height:1.75;margin-bottom:16px;max-width:620px;}
+.page .lead{font-size:22px;line-height:1.65;font-weight:300;}
+.page .small{font-size:16px;line-height:1.7;}
+.callout{font-size:26px;line-height:1.5;font-weight:300;font-style:italic;border-left:3px solid var(--accent);padding-left:28px;margin:24px 0;max-width:520px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:44px;align-items:start;}
+.four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:36px;align-items:start;}
+.step-num{font-family:'Archivo Black',sans-serif;font-size:86px;color:var(--accent);opacity:0.25;line-height:1;margin-bottom:8px;}
+.page ul{list-style:none;padding:0;}
+.page ul li{padding:6px 0;padding-left:1.5em;position:relative;font-size:17px;line-height:1.65;}
+.page ul li::before{content:'';position:absolute;left:0;top:1.15em;width:6px;height:6px;background:var(--accent);border-radius:50%;}
+#dot-nav{position:fixed;right:2vw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:100;}
+#dot-nav .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);background:transparent;cursor:pointer;transition:all 0.3s;}
+#dot-nav .dot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.3);}
+#dot-nav .dot.on-light{border-color:rgba(0,0,0,0.3);}
+#dot-nav .dot.on-light.active{border-color:var(--accent);}
+.arrow-hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.3;z-index:100;color:#fff;font-family:'Space Grotesk',sans-serif;transition:opacity 0.3s;}
+.arrow-hint.on-light{color:#111;}
+.page-logo{position:absolute;top:45px;left:100px;}
+.page-logo img{height:36px;display:block;}
+.page-logo-right{position:absolute;top:45px;right:100px;}
+.page-logo-right img{height:36px;display:block;}
+.cover-issue{position:absolute;top:45px;right:100px;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;opacity:0.4;}
+.cover h1{font-size:130px;line-height:0.95;margin-bottom:28px;}
+.cover .tagline{font-size:24px;font-weight:300;opacity:0.6;margin-bottom:8px;}
+.cover .sub{font-size:18px;opacity:0.4;max-width:520px;}
+.back-cover .page-inner{justify-content:center;align-items:center;text-align:center;}
+.back-cover h2{font-size:77px;margin-bottom:18px;}
+.back-cover .contact-line{font-size:20px;opacity:0.5;margin-bottom:8px;}
+.back-cover .cta-btn{display:inline-block;margin-top:36px;padding:16px 48px;border:2px solid var(--accent);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:all 0.3s;}
+.back-cover .cta-btn:hover{background:var(--accent);color:#fff;}
+.accent-line{width:60px;height:3px;background:var(--accent);margin-bottom:28px;}
+.flow-diagram{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:24px;margin-top:3vh;}
+.flow-node{border:1px solid rgba(240,236,230,0.15);padding:36px 28px;min-height:180px;display:flex;flex-direction:column;justify-content:space-between;position:relative;}
+.flow-node .node-num{font-family:'Archivo Black',sans-serif;font-size:13px;letter-spacing:0.2em;color:var(--accent);margin-bottom:14px;}
+.flow-node .node-title{font-family:'Archivo Black',sans-serif;font-size:22px;line-height:1.15;margin-bottom:12px;}
+.flow-node .node-desc{font-size:14px;opacity:0.7;line-height:1.5;}
+.flow-arrow{color:var(--accent);font-size:28px;opacity:0.6;font-family:'Archivo Black',sans-serif;}
+</style>
+</head>
+<body>
+
+<div id="magazine">
+
+<!-- PAGE 1: COVER -->
+<div class="page dark cover" data-theme="dark">
+  <div class="page-logo"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="cover-issue">System RAG · PL / 2026</div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 80%, rgba(187,38,73,0.08) 0%, transparent 60%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;">
+    <p class="tagline">Quantica Lab</p>
+    <h1>System RAG<br>dla organizacji</h1>
+    <div class="accent-line"></div>
+    <p class="sub">Polski system AI dla dokumentów. Zamienia wewnętrzną wiedzę organizacji — regulaminy, procedury, dokumentację — w precyzyjne odpowiedzi.</p>
+  </div>
+</div>
+
+<!-- PAGE 2: CZYM JEST -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Czym jest system RAG</div>
+  <h2>Wewnętrzna wiedza<br>w precyzyjne odpowiedzi</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">Polski system AI dla dokumentów, który przetwarza wewnętrzną wiedzę Twojej organizacji — regulaminy, procedury, dokumentację — w precyzyjne odpowiedzi.</p>
+      <p>System zapewnia bezpieczeństwo danych i zgodność z wymogami regulacyjnymi. Działa na zweryfikowanych źródłach organizacji, bez sięgania po zewnętrzną wiedzę modelu językowego.</p>
+    </div>
+    <div>
+      <div class="callout">Retrieval-Augmented Generation — AI, która odpowiada wyłącznie na podstawie Twoich dokumentów.</div>
+      <p>To fundamentalna różnica wobec ogólnych modeli AI — odpowiedź nie powstaje „z pamięci modelu", tylko z konkretnego, wskazanego fragmentu dokumentu organizacji.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: PRZEPŁYW ZAPYTANIA -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">FIG. 01 · Przepływ zapytania</div>
+  <h2>Jak działa system</h2>
+  <p class="lead" style="max-width:820px;">Każde zapytanie użytkownika przechodzi przez trzy warstwy: źródła, rdzeń RAG i warstwę odpowiedzi. Żaden etap nie korzysta z wiedzy spoza dokumentów organizacji.</p>
+  <div class="flow-diagram">
+    <div class="flow-node">
+      <div>
+        <div class="node-num">01 · Źródła</div>
+        <div class="node-title">Dokumenty organizacji</div>
+      </div>
+      <div class="node-desc">Regulaminy, procedury, dokumentacja — dowolny korpus wewnętrzny. Baza może być łatwo aktualizowana.</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node" style="border-color:rgba(187,38,73,0.4);">
+      <div>
+        <div class="node-num">02 · System RAG</div>
+        <div class="node-title">Indeksacja · Wyszukiwanie · LLM</div>
+      </div>
+      <div class="node-desc">Zapytanie użytkownika zostaje zamienione w kontekst, dopasowane do właściwych fragmentów dokumentów, a model językowy formułuje odpowiedź.</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div>
+        <div class="node-num">03 · Odpowiedź</div>
+        <div class="node-title">Precyzyjna odpowiedź ze źródłem</div>
+      </div>
+      <div class="node-desc">Odpowiedź zawiera wskazanie dokumentu, z którego pochodzi — np. Ustawa Prawo wodne.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: CZTERY ZALETY -->
+<div class="page light" data-theme="light">
+  <div class="page-logo-right"><img src="Quantica_logo_color.png" alt="Quantica Lab"></div>
+  <div class="section-label">Cztery filary wartości</div>
+  <h2>Co daje wdrożenie<br>systemu RAG</h2>
+  <div class="four-col" style="margin-top:2vh;">
+    <div>
+      <div class="step-num">01</div>
+      <h3 style="font-size:22px;">Własne dokumenty</h3>
+      <p class="small">System korzysta z dokumentów danej organizacji i może być dostosowany do jej procedur oraz sposobu komunikacji.</p>
+    </div>
+    <div>
+      <div class="step-num">02</div>
+      <h3 style="font-size:22px;">Brak halucynacji</h3>
+      <p class="small">System odpowiada wyłącznie na podstawie zweryfikowanych dokumentów organizacji, ograniczając ryzyko błędów lub „zmyślania" przez AI. Baza może być łatwo aktualizowana.</p>
+    </div>
+    <div>
+      <div class="step-num">03</div>
+      <h3 style="font-size:22px;">Automatyzacja dostępu</h3>
+      <p class="small">Automatyzacja obsługi zapytań przyspiesza dostęp do informacji i pozwala pracownikom poświęcić uwolniony czas na efektywniejszą pracę w pozostałych obszarach.</p>
+    </div>
+    <div>
+      <div class="step-num">04</div>
+      <h3 style="font-size:22px;">Bezpieczeństwo i RODO</h3>
+      <p class="small">Baza dokumentów pozostaje pod kontrolą organizacji, a system może działać w bezpiecznym środowisku spełniającym wymogi RODO — także w modelu on-premise.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: BEZPIECZEŃSTWO -->
+<div class="page dark" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div class="section-label">Bezpieczeństwo i wdrożenie</div>
+  <h2>Pod pełną kontrolą<br>organizacji</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead">W systemie RAG Quantica Lab kontrola nad bazą dokumentów i nad infrastrukturą pozostaje po stronie organizacji. Wdrażamy w modelu chmurowym, hybrydowym lub w pełni on-premise.</p>
+      <div class="callout">Zgodność z RODO. Możliwość wdrożenia on-premise. Pełny audyt odpowiedzi — każda z nich prowadzi do konkretnego fragmentu źródłowego.</div>
+    </div>
+    <div>
+      <h3>Co otrzymujesz</h3>
+      <ul>
+        <li>System dostosowany do procedur i języka organizacji</li>
+        <li>Baza dokumentów pod kontrolą organizacji, łatwo aktualizowana</li>
+        <li>Odpowiedzi wyłącznie z zweryfikowanych źródeł</li>
+        <li>Wdrożenie lokalne lub chmurowe — decyzja po stronie organizacji</li>
+        <li>Zgodność z RODO i wymogami regulacyjnymi</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: BACK COVER -->
+<div class="page dark back-cover" data-theme="dark">
+  <div class="page-logo-right"><img src="Quantica_white.png" alt="Quantica Lab"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%, rgba(187,38,73,0.06) 0%, transparent 50%);z-index:0;"></div>
+  <div style="position:relative;z-index:1;text-align:center;">
+    <div class="section-label" style="margin-bottom:4vh;">Zapraszamy do kontaktu</div>
+    <h2 style="font-size:clamp(3rem,6vw,5.4rem);margin-bottom:4vh;">Quantica Lab</h2>
+    <div class="accent-line" style="margin:0 auto 4vh auto;"></div>
+    <p class="contact-line">Quanticalab Sp. z o.o.</p>
+    <p class="contact-line">kontakt@quanticalab.ai</p>
+    <p class="contact-line">www.quanticalab.ai</p>
+    <a href="mailto:kontakt@quanticalab.ai" class="cta-btn">Napisz do nas</a>
+  </div>
+</div>
+
+</div>
+
+<div id="dot-nav"></div>
+<div class="arrow-hint" id="arrow-hint">← →  Nawiguj strzałkami</div>
+
+<script>
+(function(){
+  var BASE_W = 1440, BASE_H = 900;
+  document.querySelectorAll('.page').forEach(function(page) {
+    var inner = document.createElement('div');
+    inner.className = 'page-inner';
+    while (page.firstChild) inner.appendChild(page.firstChild);
+    page.appendChild(inner);
+  });
+  function applyScale() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var s = Math.min(vw/BASE_W, vh/BASE_H);
+    document.documentElement.style.setProperty('--page-scale', s);
+    document.querySelectorAll('.page-inner').forEach(function(el) {
+      var offsetX = (vw - BASE_W*s) / 2;
+      var offsetY = (vh - BASE_H*s) / 2;
+      el.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + s + ')';
+    });
+  }
+  applyScale();
+  window.addEventListener('resize', applyScale);
+  var mag = document.getElementById('magazine');
+  var pages = document.querySelectorAll('.page');
+  var total = pages.length, current = 0, isAnimating = false;
+  var dotNav = document.getElementById('dot-nav');
+  pages.forEach(function(_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', function() { goTo(i); });
+    dotNav.appendChild(d);
+  });
+  function goTo(idx) {
+    if (idx < 0 || idx >= total || isAnimating) return;
+    isAnimating = true; current = idx;
+    mag.style.transform = 'translateX(-' + (current * 100) + 'vw)';
+    updateUI();
+    setTimeout(function(){ isAnimating = false; }, 650);
+  }
+  function updateUI() {
+    var dots = dotNav.querySelectorAll('.dot');
+    var theme = pages[current].dataset.theme;
+    var hint = document.getElementById('arrow-hint');
+    dots.forEach(function(d, i) {
+      d.classList.toggle('active', i === current);
+      d.classList.toggle('on-light', theme === 'light');
+    });
+    hint.classList.toggle('on-light', theme === 'light');
+    if (current > 0) hint.style.opacity = '0';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+  });
+  var wheelTimeout;
+  document.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    if (wheelTimeout) return;
+    wheelTimeout = setTimeout(function(){ wheelTimeout = null; }, 800);
+    if (e.deltaX > 30 || e.deltaY > 30) goTo(current + 1);
+    else if (e.deltaX < -30 || e.deltaY < -30) goTo(current - 1);
+  }, { passive: false });
+  var touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    var dx = touchStartX - e.changedTouches[0].clientX;
+    var dy = touchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      dx > 0 ? goTo(current + 1) : goTo(current - 1);
+    }
+  }, { passive: true });
+  updateUI();
+})();
+</script>
+
+</body>
+</html>
