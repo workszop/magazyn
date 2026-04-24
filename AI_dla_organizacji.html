@@ -136,6 +136,58 @@ h1,h2,h3,h4,h5,h6,.font-display{font-family:'Archivo Black',sans-serif;font-weig
 .back-cover .cta-btn:hover{background:var(--accent);color:#fff;}
 
 .accent-line{width:60px;height:3px;background:var(--accent);margin-bottom:28px;}
+
+/* ── Mobile (≤ 900px): bypass fixed-size scaling, reflow content ── */
+@media (max-width:900px){
+  html,body{overflow:hidden;}
+  .page{overflow-x:hidden!important;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .page *{max-width:100%;}
+  .page p,.page div,.page h1,.page h2,.page h3{max-width:100%!important;}
+  .page-inner{
+    width:100%!important;height:auto!important;min-height:100vh;
+    padding:78px 22px 60px 22px!important;
+    transform:none!important;
+    justify-content:flex-start!important;
+  }
+  .two-col,.three-col,.four-col,.five-col{grid-template-columns:1fr!important;gap:28px!important;}
+  .page h1{font-size:clamp(2.2rem,10vw,4.2rem)!important;line-height:0.95;word-break:break-word;overflow-wrap:break-word;hyphens:auto;}
+  .page h2{font-size:clamp(1.8rem,7vw,3rem)!important;line-height:1.05;margin-bottom:20px;word-break:break-word;overflow-wrap:break-word;}
+  .page h3{font-size:22px!important;margin-bottom:10px;}
+  .page p{font-size:16px!important;line-height:1.65;max-width:100%!important;margin-bottom:12px;}
+  .page .lead{font-size:17.5px!important;line-height:1.55;max-width:100%!important;}
+  .page .small{font-size:14.5px!important;}
+  .page ul li{font-size:15px!important;}
+  .callout{font-size:18px!important;padding-left:18px!important;margin:16px 0!important;max-width:100%!important;line-height:1.45;}
+  .cover h1{font-size:clamp(2.4rem,10.5vw,4.6rem)!important;word-break:break-word;overflow-wrap:break-word;}
+  .cover .tagline{font-size:17px!important;}
+  .cover .sub{font-size:15px!important;max-width:100%!important;}
+  .page-logo,.page-logo-right,.cover-issue{top:22px!important;}
+  .page-logo{left:22px!important;}
+  .page-logo-right,.cover-issue{right:22px!important;}
+  .page-logo img,.page-logo-right img{height:26px!important;}
+  .cover-issue{font-size:10px!important;max-width:150px;text-align:right;line-height:1.35;}
+  .section-label{font-size:11px!important;margin-bottom:16px!important;letter-spacing:0.15em!important;}
+  .step-num{font-size:52px!important;margin-bottom:4px!important;}
+  .step-num-small{font-size:38px!important;}
+  .big-stat{font-size:72px!important;}
+  .big-stat-label{font-size:12px!important;}
+  .back-cover .page-inner{justify-content:center!important;}
+  .back-cover h2{font-size:clamp(2rem,9vw,3.6rem)!important;word-break:break-word;}
+  .back-cover .contact-line{font-size:16px!important;}
+  .back-cover .cta-btn{padding:13px 28px!important;font-size:13px!important;margin-top:24px!important;}
+  .arrow-hint{font-size:10px!important;bottom:10px!important;opacity:0.5;}
+  #dot-nav{right:10px!important;gap:7px!important;}
+  #dot-nav .dot{width:7px!important;height:7px!important;}
+  .flow-diagram{grid-template-columns:1fr!important;gap:14px!important;}
+  .flow-arrow{transform:rotate(90deg);text-align:center;justify-self:center;}
+  .flow-node{padding:24px 20px!important;min-height:auto!important;}
+  .risk-block{padding-left:18px!important;}
+  .module-block{margin-bottom:14px!important;}
+  .module-block .mod-title{font-size:16px!important;}
+  .training-meta{font-size:11px!important;margin-bottom:12px!important;}
+  .feature-block{margin-bottom:16px!important;}
+}
+
 </style>
 </head>
 <body>
@@ -374,18 +426,17 @@ h1,h2,h3,h4,h5,h6,.font-display{font-family:'Archivo Black',sans-serif;font-weig
   });
 
   function applyScale() {
-    var vw = window.innerWidth;
-    var vh = window.innerHeight;
-    var scaleX = vw / BASE_W;
-    var scaleY = vh / BASE_H;
-    var s = Math.min(scaleX, scaleY);
+    var vw = window.innerWidth, vh = window.innerHeight;
+    if (vw < 900) {
+      document.documentElement.style.setProperty('--page-scale', 1);
+      document.querySelectorAll('.page-inner').forEach(function(el) { el.style.transform = 'none'; });
+      return;
+    }
+    var s = Math.min(vw/BASE_W, vh/BASE_H);
     document.documentElement.style.setProperty('--page-scale', s);
-
     document.querySelectorAll('.page-inner').forEach(function(el) {
-      var renderedW = BASE_W * s;
-      var renderedH = BASE_H * s;
-      var offsetX = (vw - renderedW) / 2;
-      var offsetY = (vh - renderedH) / 2;
+      var offsetX = (vw - BASE_W*s) / 2;
+      var offsetY = (vh - BASE_H*s) / 2;
       el.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + s + ')';
     });
   }
